@@ -1,0 +1,438 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Миссия: Честность</title>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;font-family:Arial,sans-serif;
+ background:linear-gradient(135deg,#101b35,#172d4e,#164b55);
+ color:white;min-height:100vh;padding:25px 15px;
+}
+.container{max-width:850px;margin:auto}
+header{text-align:center;padding:25px 10px}
+.logo{font-size:48px}
+h1{font-size:34px;margin:12px 0;color:#65e6c1}
+.subtitle{color:#c4d5e5}
+.panel{
+ background:#ffffff12;border:1px solid #ffffff25;
+ border-radius:20px;padding:25px;margin:18px 0;
+ backdrop-filter:blur(10px);
+}
+button{
+ border:0;border-radius:12px;padding:14px 20px;
+ background:#53d9b3;color:#102b35;
+ font-weight:bold;font-size:15px;cursor:pointer;
+ transition:.2s;margin-top:12px;
+}
+button:hover{transform:translateY(-2px);background:#7af0cf}
+button:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.primary{width:100%;font-size:17px}
+.option{
+ display:block;width:100%;text-align:left;
+ background:#ffffff12;color:white;
+ border:1px solid #ffffff30;margin:10px 0;
+ padding:16px;border-radius:12px;
+}
+.option:hover{background:#ffffff25}
+.option.correct{background:#176d50;border:2px solid #62e6ad}
+.option.wrong{background:#873c48;border:2px solid #ff8997}
+.progress{
+ height:9px;background:#ffffff25;border-radius:20px;
+ overflow:hidden;margin:15px 0;
+}
+.bar{height:100%;background:#5de4bc;width:0;transition:.3s}
+.topline{display:flex;justify-content:space-between;gap:10px}
+.tag{color:#63e6bd;font-weight:bold}
+.hidden{display:none}
+.feedback{padding:14px;border-radius:10px;margin-top:15px;background:#ffffff15}
+.match-row{
+ display:grid;grid-template-columns:1fr 1.2fr;
+ gap:12px;align-items:center;margin:12px 0;
+}
+.match-row strong{background:#ffffff15;padding:14px;border-radius:10px}
+select{
+ width:100%;padding:13px;border-radius:10px;
+ background:#edf7f5;color:#152b38;border:0;font-size:14px;
+}
+.result{text-align:center}
+.big-score{font-size:65px;color:#62e6bd;font-weight:bold}
+.case{
+ background:#ffffff0d;border:1px solid #ffffff25;
+ border-radius:16px;padding:20px;margin:18px 0;
+}
+.case h3{color:#65e6c1;margin-top:0}
+.case p{line-height:1.6}
+.case ul{line-height:1.8;padding-left:22px}
+.case-number{color:#65e6c1;font-size:13px;font-weight:bold}
+.case-label{font-weight:bold;color:#65e6c1;margin-top:18px}
+.timer-note{
+ background:#53d9b320;border-left:3px solid #53d9b3;
+ padding:13px;border-radius:8px;margin:15px 0;
+}
+footer{text-align:center;color:#a9c2d0;padding:20px;font-size:13px}
+@media(max-width:550px){
+ h1{font-size:27px}
+ .match-row{grid-template-columns:1fr}
+ .panel{padding:18px}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+ <div class="logo">⚖️</div>
+ <h1>МИССИЯ: ЧЕСТНОСТЬ</h1>
+ <div class="subtitle">Антикоррупционная игра для студентов 1 курса</div>
+</header>
+
+<section id="start" class="panel">
+ <h2>🎯 Твоя миссия начинается!</h2>
+ <p>Ты — студент университета. Каждый день ты сталкиваешься с ситуациями, в которых необходимо сделать правильный выбор.</p>
+ <p>Твоя задача — распознавать коррупцию, принимать честные решения и проверять свои знания.</p>
+ <p><b>Структура игры:</b></p>
+ <ul>
+  <li>Раунд 1 — 10 ситуационных вопросов.</li>
+  <li>Раунд 2 — сопоставление терминов и определений.</li>
+  <li>Раунд 3 — три устных кейса с обсуждением последствий.</li>
+ </ul>
+ <p>🏆 Максимум: 270 баллов.</p>
+ <button class="primary" onclick="startGame()">НАЧАТЬ МИССИЮ →</button>
+</section>
+
+<section id="quiz" class="panel hidden">
+ <div class="topline">
+  <span class="tag" id="round">РАУНД 1</span>
+  <span>⭐ Баллы: <b id="score">0</b></span>
+ </div>
+ <div class="progress"><div class="bar" id="bar"></div></div>
+ <p id="counter" class="subtitle"></p>
+ <h2 id="question"></h2>
+ <div id="options"></div>
+ <div id="feedback" class="feedback hidden"></div>
+ <button id="next" class="primary hidden" onclick="nextQuestion()">СЛЕДУЮЩИЙ ВОПРОС →</button>
+</section>
+
+<section id="matching" class="panel hidden">
+ <div class="topline">
+  <span class="tag">РАУНД 2 — СОПОСТАВЛЕНИЕ</span>
+  <span>⭐ Баллы: <b id="score2">0</b></span>
+ </div>
+ <h2>🧠 Найди правильную пару!</h2>
+ <p>Соедини каждый термин с его определением. За каждую правильную пару — 10 баллов.</p>
+ <div id="matchArea"></div>
+ <button class="primary" onclick="checkMatches()">ПРОВЕРИТЬ ОТВЕТЫ</button>
+ <div id="matchFeedback" class="feedback hidden"></div>
+ <button id="finish" class="primary hidden" onclick="startCases()">ПЕРЕЙТИ К 3 РАУНДУ →</button>
+</section>
+
+<section id="cases" class="panel hidden">
+ <div class="topline">
+  <span class="tag">РАУНД 3 — СУД СТУДЕНЧЕСКИХ РЕШЕНИЙ</span>
+  <span>⭐ Баллы: <b id="score3">0</b></span>
+ </div>
+ <div class="progress"><div class="bar" id="bar3"></div></div>
+ <p id="caseCounter" class="subtitle"></p>
+ <h2>⚖️ Разбери ситуацию</h2>
+ <p>Внимательно прочитайте кейс. Обсудите его устно, определите нарушения и предложите возможные решения.</p>
+ <div id="caseArea"></div>
+ <div class="timer-note">
+  ⏱ Рекомендуемое время: 1 минута на чтение, 2 минуты на обсуждение и 1 минута на ответ.
+ </div>
+ <button id="caseNext" class="primary" onclick="nextCase()">СЛЕДУЮЩИЙ КЕЙС →</button>
+</section>
+
+<section id="result" class="panel result hidden">
+ <div style="font-size:55px">🏆</div>
+ <h2>МИССИЯ ЗАВЕРШЕНА!</h2>
+ <div class="big-score" id="finalScore">0</div>
+ <p id="rank"></p>
+ <p id="resultText"></p>
+ <button class="primary" onclick="location.reload()">↻ ИГРАТЬ СНОВА</button>
+</section>
+
+<footer>МИССИЯ: ЧЕСТНОСТЬ | Выбирай честность — создавай будущее!</footer>
+</div>
+
+<script>
+const questions=[
+{
+q:"Одногруппник предлагает тебе 10 000 тенге, чтобы ты передал преподавателю за него деньги за хорошую оценку. Что ты сделаешь?",
+a:["Соглашусь, если никто не узнает","Откажусь и объясню, что это взятка","Возьму деньги, но не передам"],
+c:1,e:"Передача денег за оценку является коррупционным действием. Нужно отказаться."
+},
+{
+q:"Преподаватель намекает, что без дополнительного «подарка» сдать экзамен будет сложно. Твои действия?",
+a:["Куплю подарок ради хорошей оценки","Промолчу и соглашусь","Откажусь и обращусь в соответствующие органы университета"],
+c:2,e:"Нельзя требовать подарки или деньги за выполнение должностных обязанностей."
+},
+{
+q:"Твой знакомый работает в деканате и предлагает поставить тебе оценку без экзамена. Как поступишь?",
+a:["Соглашусь, ведь это знакомый","Откажусь и сдам экзамен честно","Попрошу поставить оценку только один раз"],
+c:1,e:"Использование личных связей для получения незаконных преимуществ — проявление коррупции."
+},
+{
+q:"Ты увидел, как студент передаёт преподавателю дорогой подарок перед экзаменом. Как правильно поступить?",
+a:["Не обращать внимания","Предложить другим сделать так же","Не участвовать в этом и при необходимости сообщить о ситуации"],
+c:2,e:"Дорогие подарки могут быть способом повлиять на решение преподавателя."
+},
+{
+q:"Тебе предлагают купить готовую курсовую работу, чтобы получить высокую оценку. Что выберешь?",
+a:["Куплю и выдам за свою","Выполню работу самостоятельно","Попрошу друга написать её"],
+c:1,e:"Академическая честность предполагает самостоятельное выполнение учебных заданий."
+},
+{
+q:"Твой друг просит помочь ему списать на экзамене. Как ты поступишь?",
+a:["Дам списать, ведь мы друзья","Откажусь и предложу помочь подготовиться","Продиктую ответы незаметно"],
+c:1,e:"Дружба не должна становиться причиной нарушения академической честности."
+},
+{
+q:"Студент предлагает преподавателю оплатить пропуск занятий задним числом. Это...",
+a:["Обычная студенческая практика","Коррупционный риск","Безобидная услуга"],
+c:1,e:"Деньги за незаконное изменение официальных сведений могут быть взяткой."
+},
+{
+q:"Ты узнал, что при распределении общежития места получают только знакомые сотрудников. Что делать?",
+a:["Попытаться найти знакомого","Потребовать прозрачного порядка и сообщить о нарушении","Заплатить за место"],
+c:1,e:"Распределение мест должно проходить по установленным и равным для всех правилам."
+},
+{
+q:"Преподаватель поставил тебе высокую оценку, а после попросил оказать личную услугу в обмен. Как поступить?",
+a:["Согласиться, чтобы не испортить отношения","Отказаться и сообщить о ситуации","Выполнить услугу, ведь оценка уже получена"],
+c:1,e:"Должностное положение нельзя использовать для получения личной выгоды."
+},
+{
+q:"На студенческом мероприятии тебе предлагают заплатить организатору, чтобы твоя команда победила. Твой выбор?",
+a:["Заплатить ради победы","Предложить больше денег","Отказаться и участвовать честно"],
+c:2,e:"Честная конкуренция важнее результата, полученного нечестным способом."
+}
+];
+
+const terms=[
+["Коррупция","Использование должностных полномочий ради личной выгоды."],
+["Взятка","Деньги, ценности или иные выгоды, передаваемые за незаконное действие или бездействие."],
+["Конфликт интересов","Ситуация, когда личная заинтересованность может повлиять на объективное решение."],
+["Неподкупность","Принцип отказа от незаконного вознаграждения и нечестных преимуществ."],
+["Академическая честность","Соблюдение честности и самостоятельности в учебной деятельности."]
+];
+
+let current=0,score=0,answered=false;
+
+function show(id){
+ ["start","quiz","matching","cases","result"].forEach(x=>document.getElementById(x).classList.add("hidden"));
+ document.getElementById(id).classList.remove("hidden");
+}
+
+function startGame(){
+ show("quiz");
+ renderQuestion();
+}
+
+function renderQuestion(){
+ answered=false;
+ let q=questions[current];
+ document.getElementById("round").textContent="РАУНД 1 — СИТУАЦИИ";
+ document.getElementById("counter").textContent=`Вопрос ${current+1} из 10`;
+ document.getElementById("question").textContent=q.q;
+ document.getElementById("score").textContent=score;
+ document.getElementById("bar").style.width=(current/10*100)+"%";
+ document.getElementById("feedback").classList.add("hidden");
+ document.getElementById("next").classList.add("hidden");
+ let area=document.getElementById("options");
+ area.innerHTML="";
+ q.a.forEach((answer,i)=>{
+  let b=document.createElement("button");
+  b.className="option";
+  b.textContent=String.fromCharCode(65+i)+". "+answer;
+  b.onclick=()=>choose(i,b);
+  area.appendChild(b);
+ });
+}
+
+function choose(i,button){
+ if(answered)return;
+ answered=true;
+ let q=questions[current];
+ document.querySelectorAll(".option").forEach((b,j)=>{
+  b.disabled=true;
+  if(j===q.c)b.classList.add("correct");
+ });
+ let f=document.getElementById("feedback");
+ if(i===q.c){
+  score+=10;
+  f.innerHTML="✅ <b>Правильно! +10 баллов</b><br>"+q.e;
+ }else{
+  button.classList.add("wrong");
+  f.innerHTML="❌ <b>Неверный ответ.</b><br>"+q.e;
+ }
+ document.getElementById("score").textContent=score;
+ f.classList.remove("hidden");
+ document.getElementById("next").classList.remove("hidden");
+}
+
+function nextQuestion(){
+ current++;
+ if(current<questions.length)renderQuestion();
+ else startMatching();
+}
+
+function startMatching(){
+ show("matching");
+ document.getElementById("score2").textContent=score;
+ let defs=terms.map(x=>x[1]).sort(()=>Math.random()-.5);
+ let area=document.getElementById("matchArea");
+ area.innerHTML="";
+ terms.forEach((t,i)=>{
+  let row=document.createElement("div");
+  row.className="match-row";
+  let strong=document.createElement("strong");
+  strong.textContent=t[0];
+  let select=document.createElement("select");
+  select.id="m"+i;
+  select.innerHTML='<option value="">Выбери определение</option>';
+  defs.forEach(d=>{
+   let op=document.createElement("option");
+   op.value=d;
+   op.textContent=d;
+   select.appendChild(op);
+  });
+  row.append(strong,select);
+  area.appendChild(row);
+ });
+}
+
+function checkMatches(){
+ let correct=0;
+ terms.forEach((t,i)=>{
+  if(document.getElementById("m"+i).value===t[1])correct++;
+  document.getElementById("m"+i).disabled=true;
+ });
+ score+=correct*10;
+ document.getElementById("score2").textContent=score;
+ let f=document.getElementById("matchFeedback");
+ f.innerHTML=`Правильных пар: <b>${correct} из 5</b><br>Начислено баллов: <b>${correct*10}</b>`;
+ f.classList.remove("hidden");
+ document.querySelector("#matching button").disabled=true;
+ document.getElementById("finish").classList.remove("hidden");
+}
+
+const cases=[
+{
+title:"КЕЙС 1. ЭКЗАМЕН, КОТОРЫЙ СТОИЛ ДИПЛОМА",
+desc:"Студент не сдал экзамен. Вместо пересдачи он обращается к знакомому сотруднику университета и предлагает деньги за изменение оценки в электронной системе. Сотрудник соглашается.",
+questions:[
+"Какие нарушения совершили студент и сотрудник?",
+"Может ли студент быть отчислен из университета?",
+"Какие последствия могут наступить для сотрудника?",
+"Что изменится, если факт передачи денег будет доказан?"
+],
+outcomes:[
+"Аннулирование незаконно выставленной оценки.",
+"Дисциплинарное разбирательство в отношении участников.",
+"Отчисление студента возможно при наличии соответствующих оснований в правилах университета.",
+"Для сотрудника возможны дисциплинарные меры вплоть до увольнения.",
+"При наличии признаков правонарушения возможна правовая ответственность."
+]
+},
+{
+title:"КЕЙС 2. СТАРОСТА И ФИКТИВНАЯ ПОСЕЩАЕМОСТЬ",
+desc:"Староста группы регулярно отмечает отсутствующих студентов как присутствующих. За это одногруппники обещают оплатить ему поездку. Преподаватель знает о ситуации, но не вмешивается.",
+questions:[
+"Можно ли считать действия старосты нарушением?",
+"Какую роль играет преподаватель, который знал о происходящем?",
+"Какие последствия могут наступить для старосты и студентов?",
+"Может ли такая ситуация стать основанием для отчисления?"
+],
+outcomes:[
+"Исправление недостоверных сведений о посещаемости.",
+"Проверка обстоятельств и дисциплинарное разбирательство.",
+"Возможные взыскания для участников в зависимости от их роли.",
+"Отчисление возможно, если нарушение и его тяжесть соответствуют основаниям, предусмотренным правилами университета.",
+"При наличии признаков правонарушения возможна правовая ответственность."
+]
+},
+{
+title:"КЕЙС 3. ПОДАРОК ИЛИ ВЗЯТКА?",
+desc:"После экзамена студент дарит преподавателю дорогой телефон. Позже студент просит повысить оценку, напоминая о подарке. Выясняется, что до экзамена они уже обсуждали возможность повышения балла за вознаграждение.",
+questions:[
+"Можно ли считать телефон обычным подарком?",
+"Почему важно, что стороны обсуждали вознаграждение заранее?",
+"Кто может нести ответственность в этой ситуации?",
+"Какие последствия возможны для студента и преподавателя?"
+],
+outcomes:[
+"Проверка обстоятельств передачи подарка и договорённостей сторон.",
+"Дисциплинарное разбирательство в университете.",
+"Возможное отчисление студента при наличии оснований и с учётом тяжести нарушения.",
+"Для преподавателя возможны меры вплоть до увольнения.",
+"При доказанных признаках правонарушения возможна правовая ответственность."
+]
+}
+];
+
+let caseIndex=0;
+
+function startCases(){
+ show("cases");
+ caseIndex=0;
+ renderCase();
+}
+
+function renderCase(){
+ const c=cases[caseIndex];
+ document.getElementById("caseCounter").textContent=`Кейс ${caseIndex+1} из 3`;
+ document.getElementById("score3").textContent=score;
+ document.getElementById("bar3").style.width=(caseIndex/3*100)+"%";
+
+ let html=`
+ <div class="case">
+  <div class="case-number">СИТУАЦИЯ ${caseIndex+1}</div>
+  <h3>${c.title}</h3>
+  <p>${c.desc}</p>
+  <div class="case-label">ВОПРОСЫ ДЛЯ ОБСУЖДЕНИЯ</div>
+  <ul>${c.questions.map(q=>`<li>${q}</li>`).join("")}</ul>
+  <div class="case-label">ВОЗМОЖНЫЕ ИСХОДЫ</div>
+  <ul>${c.outcomes.map(o=>`<li>${o}</li>`).join("")}</ul>
+ </div>`;
+ document.getElementById("caseArea").innerHTML=html;
+
+ document.getElementById("caseNext").textContent=
+  caseIndex===2?"ЗАВЕРШИТЬ ИГРУ →":"СЛЕДУЮЩИЙ КЕЙС →";
+}
+
+function nextCase(){
+ caseIndex++;
+ if(caseIndex<cases.length){
+  renderCase();
+ }else{
+  showResult();
+ }
+}
+
+function showResult(){
+ show("result");
+ document.getElementById("finalScore").textContent=score+"/150";
+ let rank,text;
+ if(score>=130){
+  rank="🏆 Эксперт честности";
+  text="Отличный результат! Ты хорошо понимаешь принципы антикоррупционной культуры.";
+ }else if(score>=100){
+  rank="🥇 Защитник справедливости";
+  text="Хорошая работа! Ты умеешь распознавать большинство коррупционных ситуаций.";
+ }else if(score>=70){
+  rank="🥈 Начинающий борец с коррупцией";
+  text="Ты на правильном пути. Повтори основные понятия и принципы честности.";
+ }else{
+  rank="📚 Кандидат на звание честного студента";
+  text="Не останавливайся! Изучи правила академической честности и попробуй снова.";
+ }
+ document.getElementById("rank").textContent=rank;
+ document.getElementById("resultText").textContent=text;
+}
+</script>
+</body>
+</html>
